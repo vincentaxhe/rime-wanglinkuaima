@@ -6,11 +6,13 @@ schema:
   name: 王林快码
   version: "0.24"
   author:
-    - 佛振 <chen.sst@gmail.com>
+    - 王林
   description: |
-    27
+    原创小字根
   dependencies:
+    - pinyin
     - easy_en
+    - emoji
 
 switches:
   - name: ascii_mode
@@ -35,14 +37,24 @@ engine:
     - abc_segmentor
     - punct_segmentor
     - fallback_segmentor
+
   translators:
     - punct_translator
     - table_translator
-    - table_translator@english
+    - reverse_lookup_translator
+    - reverse_lookup_translator@pinyin_lookup
+    - reverse_lookup_translator@english
+    - reverse_lookup_translator@emoji
+
+  filters:
+    - uniquifier
 
 speller:
-  alphabet: '/;zyxwvutsrqponmlkjihgfedcba'
-  initials: 'abcdefghijklmnopqrstuvwxyz/'
+  alphabet: ;zyxwvutsrqponmlkjihgfedcba
+  initials: abcdefghijklmnopqrstvwxyz
+  delimiter: "'"
+  max_code_length: 4
+  auto_clear: max_length
   auto_select: true  #顶字上屏
   auto_select_pattern: ^[a-z;]{4}$ #自动上屏规则
   auto_select_unique_candidate: true  #无重码自动上屏
@@ -54,22 +66,52 @@ translator:
   enable_sentence: false
   enable_encoder: true
   encode_commit_history: true
-  enable_completion: true  
+  enable_completion: true
   max_phrase_length: 2
   user_dict: kuaimauser
   enable_user_dict: true
   db_class: tabledb
   initial_quality: 1
+  comment_format:  #提示码自定义
+    - "xform/~/ /" #去掉编码提示前的~号
   disable_user_dict_for_patterns:
-    - "^i.*$"
-    - "^/.*$"
+    - "^[/viu;].*$"
+    - "^[a-z;]{1,2}$"  #2码及以下不使用自动调频、不自动造词
+
+reverse_lookup:
+  extra_tags:
+    - pinyin_lookup
+    - english
+    - emoji
+
+pinyin_lookup:
+  tag: pinyin_lookup
+  dictionary: pinyin
+  prefix: "i"
+  tips: "〔拼〕"
+  preedit_format:
+    - xform/^i//
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
 
 english:
+  tag: english
   dictionary: easy_en
-  spelling_hints: 9
+  prefix: "u"
+  tips: "〔En〕"
   enable_completion: true
-  enable_sentence: false
-  initial_quality: -2
+  preedit_format:
+    - xform/^u//
+
+emoji:
+  tag: emoji
+  dictionary: emoji
+  prefix: ";"
+  tips: "〔emoji〕"
+  enable_completion: true
+  preedit_format:
+    - xform/^;//
 
 punctuator:
   import_preset: symbols
@@ -81,4 +123,7 @@ recognizer:
   import_preset: default
   patterns:
     punct: '^/([0-9]0?|[A-Za-z]+)$'
+    pinyin_lookup: "^i[a-z]+'?$"
+    emoji: "^;[a-z]*'?$"
+    english: "^u[a-z]*'?$"
 
